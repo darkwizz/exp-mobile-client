@@ -3,6 +3,7 @@ package com.example.artur.exp_mobile_android.model;
 import com.example.artur.exp_mobile_android.model.entities.ExpOpportunity;
 import com.example.artur.exp_mobile_android.model.entities.ExpPerson;
 import com.example.artur.exp_mobile_android.model.entities.jsondeserializers.ExpOpportunityDeserializer;
+import com.example.artur.exp_mobile_android.model.entities.jsondeserializers.ExpPersonDeserializer;
 import com.example.artur.exp_mobile_android.model.exceptions.InvalidTokenException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -35,7 +36,7 @@ public class ExpWebServices {
      * Logs into EXP system and keeps exp auth token.
      * @param email - exp user email;
      * @param password - exp user password;
-     * @returns <code>true</code>, when successive login;
+     * @return <code>true</code>, when successive login;
      *          <code>false</code> otherwise
      */
     public boolean login(String email, String password) {
@@ -47,6 +48,9 @@ public class ExpWebServices {
                     .post(body)
                     .build();
             Response response = client.newCall(request).execute();
+            if (response.code() >= 400) {
+                return false;
+            }
             String result = response.body().string();
             String token = result.split("\":\"")[1];
             this.token = token.substring(0, token.length() - 2);
@@ -73,6 +77,9 @@ public class ExpWebServices {
     // TODO filters
     // TODO pagination (and in server too)
     public List<ExpOpportunity> getOpportunities() throws InvalidTokenException {
+        if (token == null || token == "") {
+            throw new InvalidTokenException();
+        }
         try {
             String url = BASE_URL + "opportunities/" + token;
             Request request = new Request.Builder()
@@ -81,11 +88,11 @@ public class ExpWebServices {
             Response response = client.newCall(request).execute();
             String body = response.body().string();
             JsonElement element = new JsonParser().parse(body);
-            if (element == null) {
+            if (element == null || element.isJsonNull()) {
                 return null;
             }
             JsonElement data = element.getAsJsonObject().get("data");
-            if (data == null) {
+            if (data == null || data.isJsonNull()) {
                 return null;
             }
             Type type = new TypeToken<List<ExpOpportunity>>(){}.getType();
@@ -103,6 +110,9 @@ public class ExpWebServices {
      * @return needed opportunity
      */
     public ExpOpportunity getOpportunity(String id) throws InvalidTokenException {
+        if (token == null || token == "") {
+            throw new InvalidTokenException();
+        }
         try {
             String url = BASE_URL + "opportunities/" + id + "/" + token;
             Request request = new Request.Builder()
@@ -131,6 +141,9 @@ public class ExpWebServices {
      */
     // TODO filters
     public List<ExpPerson> getEps() throws InvalidTokenException {
+        if (token == null || token == "") {
+            throw new InvalidTokenException();
+        }
         try {
             String url = BASE_URL + "eps/" + token;
             Request request = new Request.Builder()
@@ -138,7 +151,18 @@ public class ExpWebServices {
                     .build();
             Response response = client.newCall(request).execute();
             String body = response.body().string();
-            return null;
+            JsonElement element = new JsonParser().parse(body);
+            if (element == null || element.isJsonNull()) {
+                return null;
+            }
+            JsonElement data = element.getAsJsonObject().get("data");
+            if (data == null || data.isJsonNull()) {
+                return null;
+            }
+            Type type = new TypeToken<List<ExpPerson>>(){}.getType();
+            Gson gson = getGson(ExpPerson.class, new ExpPersonDeserializer());
+            List<ExpPerson> eps = gson.fromJson(data, type);
+            return eps;
         } catch (IOException ex) {
             return null;
         }
@@ -149,6 +173,9 @@ public class ExpWebServices {
      * @return list of EPs
      */
     public List<ExpPerson> getMyEps() throws InvalidTokenException {
+        if (token == null || token == "") {
+            throw new InvalidTokenException();
+        }
         try {
             String url = BASE_URL + "eps/my/" + token;
             Request request = new Request.Builder()
@@ -156,7 +183,18 @@ public class ExpWebServices {
                     .build();
             Response response = client.newCall(request).execute();
             String body = response.body().string();
-            return null;
+            JsonElement element = new JsonParser().parse(body);
+            if (element == null || element.isJsonNull()) {
+                return null;
+            }
+            JsonElement data = element.getAsJsonObject().get("data");
+            if (data == null || data.isJsonNull()) {
+                return null;
+            }
+            Type type = new TypeToken<List<ExpPerson>>(){}.getType();
+            Gson gson = getGson(ExpPerson.class, new ExpPersonDeserializer());
+            List<ExpPerson> eps = gson.fromJson(data, type);
+            return eps;
         } catch (IOException ex) {
             return null;
         }
@@ -168,6 +206,9 @@ public class ExpWebServices {
      * @return needed EP
      */
     public ExpPerson getEp(String id) throws InvalidTokenException {
+        if (token == null || token == "") {
+            throw new InvalidTokenException();
+        }
         try {
             String url = BASE_URL + "eps/" + id + "/" + token;
             Request request = new Request.Builder()
@@ -175,7 +216,9 @@ public class ExpWebServices {
                     .build();
             Response response = client.newCall(request).execute();
             String body = response.body().string();
-            return null;
+            Gson gson = getGson(ExpPerson.class, new ExpPersonDeserializer());
+            ExpPerson ep = gson.fromJson(body, ExpPerson.class);
+            return ep;
         } catch (IOException ex) {
             return null;
         }

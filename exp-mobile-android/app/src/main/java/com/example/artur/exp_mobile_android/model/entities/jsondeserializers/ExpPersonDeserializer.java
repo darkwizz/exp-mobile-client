@@ -75,12 +75,12 @@ public class ExpPersonDeserializer implements JsonDeserializer<ExpPerson> {
     @Override
     public ExpPerson deserialize(JsonElement json, Type typeOfT,
                                  JsonDeserializationContext context) throws JsonParseException {
-        if (json == null) {
+        if (json == null || json.isJsonNull()) {
             return null;
         }
         JsonObject result = json.getAsJsonObject();
         JsonElement idElement = result.get("id");
-        if (idElement == null) {
+        if (idElement == null || idElement.isJsonNull()) {
             return null;
         }
         JsonElement firstNameElement = result.get("first_name");
@@ -94,38 +94,42 @@ public class ExpPersonDeserializer implements JsonDeserializer<ExpPerson> {
         JsonElement managersElement = result.get("managers");
 
         ExpPerson person = new ExpPerson(idElement.getAsString());
-        if (firstNameElement != null) {
+        if (firstNameElement != null && !firstNameElement.isJsonNull()) {
             person.setFirstName(firstNameElement.getAsString());
         }
-        if (lastNameElement != null) {
+        if (lastNameElement != null && !lastNameElement.isJsonNull()) {
             person.setLastName(lastNameElement.getAsString());
         }
-        if (emailElement != null) {
+        if (emailElement != null && !emailElement.isJsonNull()) {
             person.setEmail(emailElement.getAsString());
         }
-        if (phoneElement != null) {
+        if (phoneElement != null && !phoneElement.isJsonNull()) {
             person.setPhone(phoneElement.getAsString());
         }
-        if (isInterviewedElement != null) {
+        if (isInterviewedElement != null && !isInterviewedElement.isJsonNull()) {
             person.setInterviewed(isInterviewedElement.getAsBoolean());
         }
-        if (lcElement != null) {
+        if (lcElement != null && !lcElement.isJsonNull()) {
             JsonElement lcName = lcElement.getAsJsonObject().get("name");
-            if (lcName != null) {
+            if (lcName != null && !lcName.isJsonNull()) {
                 person.setLcName(lcName.getAsString());
             }
+            JsonElement countryNameElement = lcElement.getAsJsonObject().get("country");
+            if (countryNameElement != null && !countryNameElement.isJsonNull()) {
+                person.setLcCountryName(countryNameElement.getAsString());
+            }
         }
-        if (mcElement != null) {
+        if (mcElement != null && !mcElement.isJsonNull()) {
             JsonElement mcName = mcElement.getAsJsonObject().get("name");
-            if (mcName != null) {
+            if (mcName != null && !mcName.isJsonNull()) {
                 person.setLcCountryName(mcName.getAsString());
             }
         }
-        if (statusElement != null) {
+        if (statusElement != null && !statusElement.isJsonNull()) {
             ExpPersonStatus status = ExpPersonStatus.fromString(statusElement.getAsString());
             person.setStatus(status);
         }
-        if (managersElement != null) {
+        if (managersElement != null && !managersElement.isJsonNull()) {
             JsonArray managersItems = managersElement.getAsJsonArray();
             Type listPersonsType = new TypeToken<List<ExpPerson>>(){}.getType();
             Gson gson = new GsonBuilder()

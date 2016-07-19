@@ -73,13 +73,13 @@ public class ExpOpportunityDeserializer implements JsonDeserializer<ExpOpportuni
     @Override
     public ExpOpportunity deserialize(JsonElement json, Type typeOfT,
                                       JsonDeserializationContext context) throws JsonParseException {
-        if (json == null) {
+        if (json == null || json.isJsonNull()) {
             return null;
         }
         JsonObject result = json.getAsJsonObject();
 
         JsonElement idElement = result.get("id");
-        if (idElement == null) {
+        if (idElement == null || idElement.isJsonNull()) {
             return null;
         }
         JsonElement titleElement = result.get("title");
@@ -89,32 +89,32 @@ public class ExpOpportunityDeserializer implements JsonDeserializer<ExpOpportuni
         JsonElement statusElement = result.get("status");
 
         ExpOpportunity opportunity = new ExpOpportunity(idElement.getAsString());
-        if (titleElement != null) {
+        if (titleElement != null && !titleElement.isJsonNull()) {
             opportunity.setTitle(titleElement.getAsString());
         }
-        if (dateElement != null) {
+        if (dateElement != null && !dateElement.isJsonNull()) {
             Date date = deserializeDate(dateElement);
             opportunity.setEarliestStartDate(date);
         }
-        if (durationMaxElement != null) {
+        if (durationMaxElement != null && !durationMaxElement.isJsonNull()) {
             opportunity.setDurationMaximal(durationMaxElement.getAsInt());
         }
-        if (durationMinElement != null) {
+        if (durationMinElement != null && !durationMinElement.isJsonNull()) {
             opportunity.setDurationMinimal(durationMinElement.getAsInt());
         }
-        if (statusElement != null) {
+        if (statusElement != null && !statusElement.isJsonNull()) {
             ExpOpportunityStatus status = ExpOpportunityStatus
                     .fromString(statusElement.getAsString());
             opportunity.setStatus(status);
         }
         JsonElement programElement = result.get("programmes");
-        if (programElement != null) {
+        if (programElement != null && !programElement.isJsonNull()) {
             String programName = programElement.getAsJsonObject().get("short_name").getAsString();
             ExpProgramKind program = ExpProgramKind.fromString(programName);
             opportunity.setProgramKind(program);
         }
         JsonElement managersElement = result.get("managers");
-        if (managersElement != null) {
+        if (managersElement != null && !managersElement.isJsonNull()) {
             JsonArray managersItems = managersElement.getAsJsonArray();
             Gson gson = new GsonBuilder()
                     .registerTypeAdapter(ExpPerson.class, new ExpPersonDeserializer())
@@ -128,7 +128,7 @@ public class ExpOpportunityDeserializer implements JsonDeserializer<ExpOpportuni
 
     private Date deserializeDate(JsonElement dateElement) {
         Gson gson = new GsonBuilder()
-                .setDateFormat("yyyy-MM-dd'T'HH:mm:ssz")
+                .setDateFormat("yyyy-MM-dd'T'HH:mm:ss.S")
                 .create();
         Date date = gson.fromJson(dateElement, Date.class);
         return date;
