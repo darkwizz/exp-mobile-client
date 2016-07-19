@@ -10,7 +10,6 @@ public class ExpPerson {
     private String expId;
     private String firstName;
     private String lastName;
-    private String location;
     private String email;
     private String phone;
     private boolean isInterviewed;
@@ -50,14 +49,6 @@ public class ExpPerson {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
     }
 
     public String getEmail() {

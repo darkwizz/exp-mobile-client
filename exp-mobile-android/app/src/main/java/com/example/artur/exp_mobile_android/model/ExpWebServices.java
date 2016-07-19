@@ -2,9 +2,17 @@ package com.example.artur.exp_mobile_android.model;
 
 import com.example.artur.exp_mobile_android.model.entities.ExpOpportunity;
 import com.example.artur.exp_mobile_android.model.entities.ExpPerson;
+import com.example.artur.exp_mobile_android.model.entities.jsondeserializers.ExpOpportunityDeserializer;
 import com.example.artur.exp_mobile_android.model.exceptions.InvalidTokenException;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.List;
 
 import okhttp3.MediaType;
@@ -21,14 +29,16 @@ public class ExpWebServices {
     private static final String BASE_URL = "http://localhost:8000/api/v1/";
 
     private OkHttpClient client = new OkHttpClient();
+    private String token = null;
 
     /**
-     * Logs into EXP system and returns exp auth token.
+     * Logs into EXP system and keeps exp auth token.
      * @param email - exp user email;
      * @param password - exp user password;
-     * @return authentication token
+     * @returns <code>true</code>, when successive login;
+     *          <code>false</code> otherwise
      */
-    public String login(String email, String password) {
+    public boolean login(String email, String password) {
         try {
             String json = "{\"email\": \"" + email + "\", \"password\": \"" + password + "\"}";
             RequestBody body = RequestBody.create(JSON, json);
@@ -39,32 +49,30 @@ public class ExpWebServices {
             Response response = client.newCall(request).execute();
             String result = response.body().string();
             String token = result.split("\":\"")[1];
-            token = token.substring(0, token.length() - 2);
-            return token;
+            this.token = token.substring(0, token.length() - 2);
+            return true;
         } catch (IOException ex) {
-            return null;
+            return false;
         }
     }
 
     /**
      * Logs out from EXP system; makes token invalid.
-     * @param token - authentication token;
      * @return <code>true</code> when successive logout;
      *         <code>false</code> when token is already invalid
      */
     // TODO
-    public boolean logout(String token) {
+    public boolean logout() {
         return false;
     }
 
     /**
      * Gets list of all available opportunities (without filters).
-     * @param token - authentication token
      * @return list of opportunities
      */
     // TODO filters
     // TODO pagination (and in server too)
-    public List<ExpOpportunity> getOpportunities(String token) throws InvalidTokenException {
+    public List<ExpOpportunity> getOpportunities() throws InvalidTokenException {
         try {
             String url = BASE_URL + "opportunities/" + token;
             Request request = new Request.Builder()
@@ -72,7 +80,18 @@ public class ExpWebServices {
                     .build();
             Response response = client.newCall(request).execute();
             String body = response.body().string();
-            return null;
+            JsonElement element = new JsonParser().parse(body);
+            if (element == null) {
+                return null;
+            }
+            JsonElement data = element.getAsJsonObject().get("data");
+            if (data == null) {
+                return null;
+            }
+            Type type = new TypeToken<List<ExpOpportunity>>(){}.getType();
+            Gson gson = getGson(ExpOpportunity.class, new ExpOpportunityDeserializer());
+            List<ExpOpportunity> opportunities = gson.fromJson(data, type);
+            return opportunities;
         } catch (IOException ex) {
             return null;
         }
@@ -80,11 +99,10 @@ public class ExpWebServices {
 
     /**
      * Gets opportunity with specified identifier.
-     * @param token - authentication token;
      * @param id - opportunity id;
      * @return needed opportunity
      */
-    public ExpOpportunity getOpportunity(String token, String id) throws InvalidTokenException {
+    public ExpOpportunity getOpportunity(String id) throws InvalidTokenException {
         try {
             String url = BASE_URL + "opportunities/" + id + "/" + token;
             Request request = new Request.Builder()
@@ -92,19 +110,27 @@ public class ExpWebServices {
                     .build();
             Response response = client.newCall(request).execute();
             String body = response.body().string();
-            return null;
+            Gson gson = getGson(ExpOpportunity.class, new ExpOpportunityDeserializer());
+            ExpOpportunity opportunity = gson.fromJson(body, ExpOpportunity.class);
+            return opportunity;
         } catch (IOException ex) {
             return null;
         }
     }
 
+    private <T> Gson getGson(Class<T> type, JsonDeserializer<T> deserializer) {
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(type, deserializer)
+                .create();
+        return gson;
+    }
+
     /**
      * Gets list of all registered EPs (without filters).
-     * @param token - authenticity token;
      * @return list of EPs
      */
     // TODO filters
-    public List<ExpPerson> getEps(String token) throws InvalidTokenException {
+    public List<ExpPerson> getEps() throws InvalidTokenException {
         try {
             String url = BASE_URL + "eps/" + token;
             Request request = new Request.Builder()
@@ -120,10 +146,9 @@ public class ExpWebServices {
 
     /**
      * Gets list of current logged in manager EPs.
-     * @param token - authenticity token
      * @return list of EPs
      */
-    public List<ExpPerson> getMyEps(String token) throws InvalidTokenException {
+    public List<ExpPerson> getMyEps() throws InvalidTokenException {
         try {
             String url = BASE_URL + "eps/my/" + token;
             Request request = new Request.Builder()
@@ -139,11 +164,10 @@ public class ExpWebServices {
 
     /**
      * Gets EP with specified id.
-     * @param token - authenticity token;
      * @param id - EP id;
      * @return needed EP
      */
-    public ExpPerson getEp(String token, String id) throws InvalidTokenException {
+    public ExpPerson getEp(String id) throws InvalidTokenException {
         try {
             String url = BASE_URL + "eps/" + id + "/" + token;
             Request request = new Request.Builder()

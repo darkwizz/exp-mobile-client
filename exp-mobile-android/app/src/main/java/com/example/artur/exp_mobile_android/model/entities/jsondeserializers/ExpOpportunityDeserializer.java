@@ -2,6 +2,7 @@ package com.example.artur.exp_mobile_android.model.entities.jsondeserializers;
 
 import com.example.artur.exp_mobile_android.model.entities.ExpOpportunity;
 import com.example.artur.exp_mobile_android.model.entities.ExpOpportunityStatus;
+import com.example.artur.exp_mobile_android.model.entities.ExpPerson;
 import com.example.artur.exp_mobile_android.model.entities.ExpProgramKind;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -11,6 +12,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -110,6 +112,16 @@ public class ExpOpportunityDeserializer implements JsonDeserializer<ExpOpportuni
             String programName = programElement.getAsJsonObject().get("short_name").getAsString();
             ExpProgramKind program = ExpProgramKind.fromString(programName);
             opportunity.setProgramKind(program);
+        }
+        JsonElement managersElement = result.get("managers");
+        if (managersElement != null) {
+            JsonArray managersItems = managersElement.getAsJsonArray();
+            Gson gson = new GsonBuilder()
+                    .registerTypeAdapter(ExpPerson.class, new ExpPersonDeserializer())
+                    .create();
+            Type type = new TypeToken<List<ExpPerson>>(){}.getType();
+            List<ExpPerson> managers = gson.fromJson(managersItems, type);
+            opportunity.getManagers().addAll(managers);
         }
         return opportunity;
     }

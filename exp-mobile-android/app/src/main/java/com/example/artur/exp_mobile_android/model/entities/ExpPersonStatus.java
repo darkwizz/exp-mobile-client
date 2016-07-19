@@ -7,5 +7,20 @@ public enum ExpPersonStatus {
     OPEN,
     APPLIED,
     ACCEPTED,
-    REALIZED
+    REALIZED;
+
+    public static ExpPersonStatus fromString(String stringStatus) {
+        stringStatus = stringStatus.toLowerCase();
+        if (stringStatus.contains("open")) {
+            return ExpPersonStatus.OPEN;
+        } else if (stringStatus.contains("applied")) {
+            return ExpPersonStatus.APPLIED;
+        } else if (stringStatus.contains("accepted")) {
+            return ExpPersonStatus.ACCEPTED;
+        } else if (stringStatus.contains("realized")) {
+            return ExpPersonStatus.REALIZED;
+        } else {
+            return null;
+        }
+    }
 }
